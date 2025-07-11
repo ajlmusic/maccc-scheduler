@@ -1,8 +1,8 @@
 import { AuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { PrismaAdapter } from '@next-auth/prisma-adapter' // ✅ Correct
-import {prisma} from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
+import { PrismaAdapter } from '@next-auth/prisma-adapter'
+import { prisma } from '@/lib/prisma'
+import argon2 from 'argon2' // ✅ Use argon2 instead of bcrypt
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -20,12 +20,17 @@ export const authOptions: AuthOptions = {
           where: { email: credentials.email },
         })
 
-        if (!user) return null
+        if (!user || !user.password) return null
 
-        const valid = await bcrypt.compare(credentials.password, user.password)
+        const valid = await argon2.verify(user.password, credentials.password) // ✅ argon2 verify
         if (!valid) return null
 
-        return { id: user.id.toString(), name: user.name, email: user.email, role: user.role }
+        return {
+          id: user.id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        }
       },
     }),
   ],

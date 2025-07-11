@@ -1,7 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import SessionWrapper from '@/components/SessionWrapper'
-
+import Nav from '@/components/Nav'
 export const metadata: Metadata = {
   title: 'MACCC Scheduler',
   description: 'Schedule Manager',
@@ -17,8 +17,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#9E1B32" />
       </head>
       <body>
-
-        <SessionWrapper>{children}</SessionWrapper>
+        
+        <SessionWrapper>
+          <>
+          <Nav/>
+          {children}
+          </>
+        </SessionWrapper>
       </body>
     </html>
   )
