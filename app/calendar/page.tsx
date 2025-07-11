@@ -17,7 +17,7 @@ interface MatchEvent {
   }
 }
 
-export default function CalendarPage() {
+export default function CalendarPage({ acronym }: { acronym: string }) {
   const [events, setEvents] = useState<MatchEvent[]>([])
 
   useEffect(() => {
@@ -50,7 +50,8 @@ export default function CalendarPage() {
   return (
     <div className="max-w-6xl mx-auto mt-10">
       <h1 className="text-2xl font-bold mb-4">Match Calendar</h1>
-
+<a href={`/api/export/pdf?college=${acronym}`} className="btn btn-sm btn-outline">Download PDF</a>
+<a href={`/api/export/ics?college=${acronym}`} className="btn btn-sm btn-outline ml-2">Download ICS</a>
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
