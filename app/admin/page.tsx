@@ -29,6 +29,9 @@ export default function AdminPage() {
 
 <ul className="mt-6 list-disc list-inside space-y-2">
   <li>
+    <Link href="/admin/calendar" className="text-blue-600 hover:underline">📅 View Calendar</Link>
+  </li>
+  <li>
     <Link href="/admin/schedule" className="text-blue-600 hover:underline">📅 View and generate schedule</Link>
   </li>
   <li>

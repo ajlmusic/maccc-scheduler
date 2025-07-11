@@ -4,3 +4,7 @@ POST http://localhost:3000/api/auth/callback/credentials
     "email":"admin@maccc.edu",
     "password":"maccc123"
 }
+
+###
+
+GET http://localhost:3000/api/matches
