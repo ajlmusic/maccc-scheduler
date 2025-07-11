@@ -20,14 +20,11 @@ export default function LoginPage() {
     const res = await signIn('credentials', {
       email,
       password,
-      redirect: false,
-      callbackUrl: '/admin',
+      redirect: false, // keep false to handle manually
     })
 
-    console.log('Login response:', res)
-
     if (res?.ok) {
-      router.push(res.url || '/admin')
+      router.push('/admin') // explicitly redirect
     } else {
       setError('Invalid email or password')
     }
@@ -36,7 +33,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center   bg-[#fbebd6] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#fbebd6] px-4">
       <div className="w-full max-w-md bg-white p-6 rounded shadow">
         <Image
           src="/logo.png"
