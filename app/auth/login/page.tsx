@@ -10,33 +10,45 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
+    setError('')
+
     const res = await signIn('credentials', {
       email,
       password,
       redirect: false,
+      callbackUrl: '/admin',
     })
+
+    console.log('Login response:', res)
+
     if (res?.ok) {
-      router.push('/admin') // or your dashboard
+      router.push(res.url || '/admin')
     } else {
       setError('Invalid email or password')
     }
+
+    setLoading(false)
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md bg-white p-6 rounded shadow">
-                <Image
+        <Image
           src="/logo.png"
           alt="MACCC Scheduler Logo"
-          width={200}
-          height={200}
+          width={180}
+          height={180}
           className="mx-auto mb-6"
           priority
-          />
-        <h1 className="text-black text-xl font-bold mb-6">MACCC Admin Login</h1>
+        />
+        <h1 className="text-black text-xl font-bold text-center mb-4">
+          MACCC Admin Login
+        </h1>
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
@@ -56,9 +68,10 @@ export default function LoginPage() {
           />
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
           >
-            Sign In
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
           {error && <p className="text-red-600 text-sm">{error}</p>}
         </form>

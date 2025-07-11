@@ -1,6 +1,7 @@
-import NextAuth, { NextAuthOptions } from 'next-auth'
-import CredentialsProvider from 'next-auth/providers/credentials'
+// lib/authOptions.ts
 import { prisma } from '@/lib/prisma'
+import { NextAuthOptions } from 'next-auth'
+import CredentialsProvider from 'next-auth/providers/credentials'
 import argon2 from 'argon2'
 
 export const authOptions: NextAuthOptions = {
@@ -9,13 +10,14 @@ export const authOptions: NextAuthOptions = {
       name: 'Credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' }
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         const { email, password } = credentials ?? {}
         if (!email || !password) return null
 
         const user = await prisma.user.findUnique({ where: { email } })
+        console.log("🔐 Found user:", user)
         if (!user) return null
 
         const valid = await argon2.verify(user.password, password)
@@ -25,10 +27,10 @@ export const authOptions: NextAuthOptions = {
           id: String(user.id),
           name: user.name,
           email: user.email,
-          role: user.role
+          role: user.role,
         }
-      }
-    })
+      },
+    }),
   ],
   session: { strategy: 'jwt' },
   callbacks: {
@@ -37,19 +39,14 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async session({ session, token }) {
-      if (token?.role && session.user) session.user.role = token.role as string
+      if (token?.role && session.user) {
+        session.user.role = token.role as string
+      }
       return session
-    }
+    },
   },
   pages: {
-    signIn: '/auth/login'
+    signIn: '/auth/login',
   },
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET,
 }
-
-const handler = NextAuth(authOptions)
-
-const GET = handler as unknown as (req: Request) => Promise<Response>
-const POST = handler as unknown as (req: Request) => Promise<Response>
-
-export { GET, POST }
