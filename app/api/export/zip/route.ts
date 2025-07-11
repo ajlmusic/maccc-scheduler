@@ -13,8 +13,8 @@ export async function GET() {
   })
 
   const archive = archiver("zip", { zlib: { level: 9 } })
-  const stream = new PassThrough()
-  archive.pipe(stream)
+  const pass = new PassThrough()
+  archive.pipe(pass)
 
   for (const college of colleges) {
     const matches = [...college.matchesAsHome, ...college.matchesAsAway]
@@ -39,7 +39,16 @@ export async function GET() {
 
   archive.finalize()
 
-  return new Response(stream, {
+  // Convert Node.js stream to Web-compatible ReadableStream
+  const readable = new ReadableStream({
+    start(controller) {
+      pass.on("data", (chunk) => controller.enqueue(chunk))
+      pass.on("end", () => controller.close())
+      pass.on("error", (err) => controller.error(err))
+    }
+  })
+
+  return new Response(readable, {
     headers: {
       "Content-Type": "application/zip",
       "Content-Disposition": "attachment; filename=maccc_calendars.zip"
