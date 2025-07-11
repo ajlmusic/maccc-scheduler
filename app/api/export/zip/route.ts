@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { PDFDocument, StandardFonts } from "pdf-lib"
 import archiver from "archiver"
-import { NextResponse } from "next/server"
 import { PassThrough } from "stream"
 
 export async function GET() {

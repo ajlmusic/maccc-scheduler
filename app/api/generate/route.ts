@@ -1,57 +1,87 @@
-import { prisma } from "@/lib/prisma"
-import { START_DATE } from "@/lib/settings"
-import { NextResponse } from "next/server"
+import { NextResponse } from 'next/server'
+import {prisma} from '@/lib/prisma'
+
+// Define types for clarity
+interface Team {
+  id: number
+  collegeId: number
+  sportId: number
+}
+
+interface MatchInput {
+  homeTeamId: number
+  awayTeamId: number
+  homeCollegeId: number
+  awayCollegeId: number
+  sportId: number
+}
 
 export async function POST() {
-  const sports = await prisma.sport.findMany({
-    include: {
-      teams: {
-        include: {
-          college: true
+  try {
+    const teams = await prisma.team.findMany({
+      include: {
+        college: true,
+        sport: true,
+      },
+    })
+
+    // Group teams by sport
+    const teamsBySport = teams.reduce<Record<number, Team[]>>((acc, team) => {
+      if (!acc[team.sportId]) {
+        acc[team.sportId] = []
+      }
+      acc[team.sportId].push(team)
+      return acc
+    }, {})
+
+    const newMatches: MatchInput[] = []
+
+    for (const sportId in teamsBySport) {
+      const sportTeams = teamsBySport[parseInt(sportId)]
+      for (let i = 0; i < sportTeams.length; i++) {
+        for (let j = i + 1; j < sportTeams.length; j++) {
+          const home = sportTeams[i]
+          const away = sportTeams[j]
+
+          newMatches.push({
+            homeTeamId: home.id,
+            awayTeamId: away.id,
+            homeCollegeId: home.collegeId,
+            awayCollegeId: away.collegeId,
+            sportId: home.sportId,
+          })
+
+          // Optionally add reverse match for home/away balance
+          newMatches.push({
+            homeTeamId: away.id,
+            awayTeamId: home.id,
+            homeCollegeId: away.collegeId,
+            awayCollegeId: home.collegeId,
+            sportId: away.sportId,
+          })
         }
       }
     }
-  })
 
-  const matchesToCreate: any[] = []
+    // Delete existing matches before generating new ones
+    await prisma.match.deleteMany()
 
-  for (const sport of sports) {
-    const teams = sport.teams
-    const totalRounds = teams.length - 1
-    const matchesPerRound = teams.length / 2
-    const scheduleDate = new Date(START_DATE)
+    // Generate matches with placeholder date and location
+    const now = new Date()
+    await prisma.match.createMany({
+      data: newMatches.map((m, index) => ({
+        homeTeamId: m.homeTeamId,
+        awayTeamId: m.awayTeamId,
+        homeCollegeId: m.homeCollegeId,
+        awayCollegeId: m.awayCollegeId,
+        date: new Date(now.getTime() + index * 86400000), // one match per day
+        location: 'TBD',
+      })),
+    })
 
-    for (let round = 0; round < totalRounds; round++) {
-      for (let match = 0; match < matchesPerRound; match++) {
-        const homeIdx = (round + match) % (teams.length - 1)
-        const awayIdx = (teams.length - 1 - match + round) % (teams.length - 1)
-
-        let home = teams[homeIdx]
-        let away = teams[awayIdx]
-
-        // Last team always fixed if odd number
-        if (match === 0) away = teams[teams.length - 1]
-
-        matchesToCreate.push({
-          date: new Date(scheduleDate),
-          location: home.college.name,
-          homeTeamId: home.id,
-          awayTeamId: away.id,
-          homeCollegeId: home.collegeId,
-          awayCollegeId: away.collegeId,
-          status: "Scheduled"
-        })
-      }
-
-      scheduleDate.setDate(scheduleDate.getDate() + 7) // weekly interval
-    }
+    return NextResponse.json({ success: true, count: newMatches.length })
+  } catch (err) {
+    console.error('Schedule generation failed:', err)
+    return NextResponse.json({ error: 'Failed to generate schedule' }, { status: 500 })
   }
-
-  // Clear existing matches
-  await prisma.match.deleteMany()
-
-  // Bulk create
-  await prisma.match.createMany({ data: matchesToCreate })
-
-  return NextResponse.json({ success: true, created: matchesToCreate.length })
 }
