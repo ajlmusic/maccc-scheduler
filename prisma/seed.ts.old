@@ -1,0 +1,213 @@
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
+
+import argon2 from "argon2"
+
+async function seedAdminUser() {
+  const hashed = await argon2.hash("maccc123")
+
+  await prisma.user.upsert({
+    where: { email: "admin@maccc.edu" },
+    update: {},
+    create: {
+      name: "MACCC Admin",
+      email: "admin@maccc.edu",
+      password: hashed,
+      role: "ADMIN"
+    }
+  })
+}
+
+async function main() {
+
+    const colleges = [
+  {
+    name: "Coahoma Community College",
+    acronym: "CCC",
+    address: "3240 Friars Point Rd",
+    city: "Clarksdale",
+    state: "MS",
+    zip: "38614",
+    latitude: 34.2006,
+    longitude: -90.5709,
+  },
+  {
+    name: "Hinds Community College",
+    acronym: "HCC",
+    address: "505 E Main St",
+    city: "Raymond",
+    state: "MS",
+    zip: "39154",
+    latitude: 32.2603,
+    longitude: -90.4072,
+  },
+  {
+    name: "Itawamba Community College",
+    acronym: "ICC",
+    address: "602 W Hill St",
+    city: "Fulton",
+    state: "MS",
+    zip: "38843",
+    latitude: 34.2661,
+    longitude: -88.4002,
+  },
+  {
+    name: "Jones College",
+    acronym: "JC",
+    address: "900 S Court St",
+    city: "Ellisville",
+    state: "MS",
+    zip: "39437",
+    latitude: 31.5977,
+    longitude: -89.2153,
+  },
+  {
+    name: "Meridian Community College",
+    acronym: "MCC",
+    address: "910 Hwy 19 N",
+    city: "Meridian",
+    state: "MS",
+    zip: "39307",
+    latitude: 32.3913,
+    longitude: -88.6929,
+  },
+  {
+    name: "Mississippi Delta Community College",
+    acronym: "MDCC",
+    address: "Hwy 3 & Cherry St",
+    city: "Moorhead",
+    state: "MS",
+    zip: "38761",
+    latitude: 33.4502,
+    longitude: -90.5215,
+  },
+  {
+    name: "Northeast Mississippi Community College",
+    acronym: "NEMCC",
+    address: "101 Cunningham Blvd",
+    city: "Booneville",
+    state: "MS",
+    zip: "38829",
+    latitude: 34.6700,
+    longitude: -88.5662,
+  },
+  {
+    name: "Northwest Mississippi Community College",
+    acronym: "NWCC",
+    address: "4975 Hwy 51 N",
+    city: "Senatobia",
+    state: "MS",
+    zip: "38668",
+    latitude: 34.6334,
+    longitude: -89.9681,
+  },
+  {
+    name: "Pearl River Community College",
+    acronym: "PRCC",
+    address: "101 Hwy 11 N",
+    city: "Poplarville",
+    state: "MS",
+    zip: "39470",
+    latitude: 30.8417,
+    longitude: -89.5340,
+  },
+  {
+    name: "East Mississippi Community College",
+    acronym: "EMCC",
+    address: "8731 S Frontage Rd",
+    city: "Mayhew",
+    state: "MS",
+    zip: "39753",
+    latitude: 33.5645,
+    longitude: -88.5837,
+  },
+  {
+    name: "Southwest Mississippi Community College",
+    acronym: "SMCC",
+    address: "1156 College Dr",
+    city: "Summit",
+    state: "MS",
+    zip: "39666",
+    latitude: 31.2837,
+    longitude: -90.4701,
+  },
+  {
+    name: "Mississippi Gulf Coast Community College",
+    acronym: "MGCCC",
+    address: "51 Main St",
+    city: "Perkinston",
+    state: "MS",
+    zip: "39573",
+    latitude: 30.7812,
+    longitude: -89.1370,
+  },
+  {
+    name: "East Central Community College",
+    acronym: "ECCC",
+    address: "275 W Broad St",
+    city: "Decatur",
+    state: "MS",
+    zip: "39327",
+    latitude: 32.4382,
+    longitude: -89.1204,
+  },
+  {
+    name: "Copiah-Lincoln Community College",
+    acronym: "CLCC",
+    address: "1001 Co-Lin Ln",
+    city: "Wesson",
+    state: "MS",
+    zip: "39191",
+    latitude: 31.7017,
+    longitude: -90.3957,
+  },
+  {
+    name: "Holmes Community College",
+    acronym: "HCC2",
+    address: "1 Hill St",
+    city: "Goodman",
+    state: "MS",
+    zip: "39079",
+    latitude: 32.9682,
+    longitude: -89.9111,
+  }
+]
+
+  const sports = [
+    { name: "Football", preferredMatchDay: "Saturday", preferredMatchTime: "13:00" },
+    { name: "Basketball", preferredMatchDay: "Wednesday", preferredMatchTime: "18:00" },
+    { name: "Soccer", preferredMatchDay: "Tuesday", preferredMatchTime: "16:00" }
+  ]
+
+  for (const sport of sports) {
+    await prisma.sport.upsert({
+      where: { name: sport.name },
+      update: {},
+      create: sport,
+    })
+  }
+
+  for (const college of colleges) {
+    const createdCollege = await prisma.college.upsert({
+      where: { acronym: college.acronym },
+      update: {},
+      create: college,
+    })
+
+    for (const sport of sports) {
+      const sportData = await prisma.sport.findUnique({ where: { name: sport.name } })
+
+      await prisma.team.create({
+        data: {
+          name: `${college.acronym} ${sport.name}`,
+          collegeId: createdCollege.id,
+          sportId: sportData!.id,
+        },
+      })
+    }
+  }
+
+  console.log("✅ Seed complete")
+}
+
+main().catch(console.error).finally(() => prisma.$disconnect())

@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model College {
+  id        Int      @id @default(autoincrement())
+  name      String
+  acronym   String   @unique
+  address   String
+  city      String
+  state     String
+  zip       String
+  latitude  Float
+  longitude Float
+
+  teams     Team[]
+  matchesAsHome Match[] @relation("HomeMatches")
+  matchesAsAway Match[] @relation("AwayMatches")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Sport {
+  id        Int     @id @default(autoincrement())
+  name      String  @unique
+  preferredMatchDay String
+  preferredMatchTime String
+
+  teams     Team[]
+}
+
+model Team {
+  id        Int     @id @default(autoincrement())
+  name      String
+  college   College @relation(fields: [collegeId], references: [id])
+  collegeId Int
+  sport     Sport   @relation(fields: [sportId], references: [id])
+  sportId   Int
+
+  matchesAsHome Match[] @relation("TeamHome")
+  matchesAsAway Match[] @relation("TeamAway")
+}
+
+enum MatchStatus {
+  Scheduled
+  Completed
+  Canceled
+}
+
+model Match {
+  id        Int     @id @default(autoincrement())
+  date      DateTime
+  location  String
+
+  homeTeam   Team @relation("TeamHome", fields: [homeTeamId], references: [id])
+  homeTeamId Int
+
+  awayTeam   Team @relation("TeamAway", fields: [awayTeamId], references: [id])
+  awayTeamId Int
+
+  homeCollege   College @relation("HomeMatches", fields: [homeCollegeId], references: [id])
+  homeCollegeId Int
+
+  awayCollege   College @relation("AwayMatches", fields: [awayCollegeId], references: [id])
+  awayCollegeId Int
+
+  status    MatchStatus @default(Scheduled)
+  homeScore Int?
+  awayScore Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  ADMIN
+  USER
+}
