@@ -1,21 +1,13 @@
-// app/admin/schedule/[sport]/page.tsx
-import { notFound } from 'next/navigation'
-
-interface PageProps {
-  params: {
-    sport: string
-  }
-}
-
-export default function SportSchedulePage({ params }: PageProps) {
-  const { sport } = params
-
-  if (!sport) return notFound()
-
+import ScheduleList from './ScheduleList'
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ sport: string }>
+}) {
+  const { sport } = await params
   return (
     <div className="max-w-4xl mx-auto mt-10 px-4">
-      <h1 className="text-2xl font-bold mb-4">Schedule for {sport}</h1>
-      {/* You can fetch and show matches by sport here */}
-    </div>
-  )
+      <h1 className="text-2xl font-bold mb-4">📅 Schedule for {sport}</h1>
+      <ScheduleList sport={sport} />
+    </div>)
 }

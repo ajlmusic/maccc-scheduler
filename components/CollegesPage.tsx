@@ -1,67 +1,71 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import axios from 'axios'
 
+interface Sport {
+  id: number
+  name: string
+}
+
 interface College {
-  id: string
+  id: number
   name: string
   acronym: string
-  city?: string
-  state?: string
-  sports?: string[]
+  city: string
+  state: string
+  sports: Sport[] // ✅ Make sure this is always defined
 }
 
 export default function CollegesPage() {
   const [colleges, setColleges] = useState<College[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchColleges = async () => {
       try {
         const res = await axios.get<College[]>('/api/colleges')
-        setColleges(res.data)
+        // Ensure sports is always defined
+        const safeData = res.data.map((c) => ({
+          ...c,
+          sports: c.sports ?? [],
+        }))
+        setColleges(safeData)
       } catch (err) {
-        console.error('Error fetching colleges:', err)
-        setError('Failed to load colleges.')
+        console.error('Failed to fetch colleges:', err)
+        setError('Failed to load colleges')
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchColleges()
   }, [])
 
+  if (loading) return <p className="mt-10 px-4">Loading colleges...</p>
+  if (error) return <p className="mt-10 px-4 text-red-600">{error}</p>
+
   return (
-    <div className="max-w-4xl mx-auto mt-10 px-4">
-      <h2 className="text-2xl font-bold mb-4">🏫 Manage Colleges</h2>
-
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-
-      {colleges.length === 0 && !error && (
-        <p className="text-gray-500">No colleges found.</p>
-      )}
-
-      <ul className="space-y-2">
+    <div className="max-w-5xl mx-auto mt-10 px-4">
+      <h1 className="text-2xl font-bold mb-4">🏫 Participating Colleges</h1>
+      <ul className="space-y-4">
         {colleges.map((c) => (
-          <li key={c.id} className="border p-3 rounded shadow-sm">
-            <strong>{c.name}</strong> ({c.acronym})
-            {c.city && c.state && (
-              <span className="text-sm text-gray-600 ml-2">
-                – {c.city}, {c.state}
-              </span>
-            )}
-            {c.sports?.length > 0 && (
+          <li key={c.id} className="border p-4 rounded shadow-sm">
+            <div className="text-lg font-semibold">
+              {c.acronym} — {c.name}
+            </div>
+            <div className="text-sm text-gray-600">
+              📍 {c.city}, {c.state}
+            </div>
+            {(c.sports?.length ?? 0) > 0 && (
               <div className="text-sm text-blue-600 mt-1">
                 Sports:{' '}
                 {c.sports.map((sport, index) => (
-                  <Link
-                    key={sport}
-                    href={`/schedule/${sport.toLowerCase()}`}
-                    className="text-blue-600 underline hover:text-blue-800"
-                  >
-                    {sport}
-                    {index < c.sports.length - 1 ? ', ' : ''}
-                  </Link>
+                  <span key={sport.id}>
+                    {sport.name}
+                    {index < c.sports.length - 1 && ', '}
+                  </span>
                 ))}
               </div>
             )}

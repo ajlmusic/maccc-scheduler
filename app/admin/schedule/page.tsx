@@ -3,15 +3,25 @@
 import { useState } from "react"
 import axios from "axios"
 
+interface GenerateResponse {
+  created: number
+}
+
 export default function ScheduleGenerator() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState("")
 
   const generateSchedule = async () => {
-    setLoading(true)
-    const res = await axios.post("/api/generate")
-    setResult(`✅ Generated ${res.data.created} matches`)
-    setLoading(false)
+    try {
+      setLoading(true)
+      const res = await axios.post<GenerateResponse>("/api/generate")
+      setResult(`✅ Generated ${res.data.created} matches`)
+    } catch (error) {
+      console.error("Error generating schedule:", error)
+      setResult("❌ Failed to generate schedule.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
