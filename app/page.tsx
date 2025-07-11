@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gray-100 px-4">
+    <main className="min-h-screen flex flex-col items-center justify-center  bg-[#fbebd6] px-4">
       <div className="text-center">
         <Image
           src="/logo.png"
