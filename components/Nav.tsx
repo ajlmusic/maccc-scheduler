@@ -1,30 +1,22 @@
-'use client'
+'use client';
 
-import { useSession, signOut } from 'next-auth/react'
-import Link from 'next/link'
-import { useState } from 'react'
+import Link from 'next/link';
+import { useState } from 'react';
+import { authClient } from '@/lib/auth-client';
 
 export default function Nav() {
-  const { data: session } = useSession()
-  const [isOpen, setIsOpen] = useState(false)
+  const { data } = authClient.useSession();       // no isLoading here
+  const loading = typeof data === 'undefined';    // first render before fetch
+  const user = data?.user ?? null;
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <header className="bg-black text-white shadow">
       <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
         <h1 className="text-xl font-bold">MACCC Admin</h1>
 
-        {/* Hamburger Button */}
-        <button
-          className="lg:hidden"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label="Toggle menu"
-        >
-          <svg
-            className="h-6 w-6 text-white"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+        <button className="lg:hidden" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
+          <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {isOpen ? (
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             ) : (
@@ -33,7 +25,6 @@ export default function Nav() {
           </svg>
         </button>
 
-        {/* Menu */}
         <nav
           className={`${
             isOpen ? 'block' : 'hidden'
@@ -45,16 +36,23 @@ export default function Nav() {
           <Link href="/admin/schedule" className="block hover:underline">⚙️ Generate</Link>
           <Link href="/admin/export" className="block hover:underline">Export</Link>
           <Link href="/admin/settings" className="block hover:underline">Settings</Link>
-          {session?.user && (
+
+          {loading ? (
+            <span className="block text-sm text-gray-300">…</span>
+          ) : user ? (
             <button
-              onClick={() => signOut()}
+              onClick={() => authClient.signOut()}
               className="block text-sm text-red-400 hover:underline"
             >
               🚪 Logout
             </button>
+          ) : (
+            <Link href="/sign-in" className="block text-sm text-blue-300 hover:underline">
+              Login
+            </Link>
           )}
         </nav>
       </div>
     </header>
-  )
+  );
 }
